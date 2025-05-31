@@ -23,11 +23,11 @@ export default function Home() {
         <button onClick={joinRoom}>Unirse a Sala</button>
       </div>
       <p>Comparte el ID de la sala con tu novia y compitan para ver quién la encuentra más rápido.</p>
-      <style jsx>{\`
+      <style jsx>{`
         .container { display:flex; flex-direction:column; align-items:center; margin-top:50px; }
         button { margin:8px; padding:10px 20px; background:#d6336c; color:#fff; border:none; border-radius:6px; cursor:pointer; }
         input { padding:8px; border-radius:4px; border:1px solid #ccc; margin-right:8px;}
-      \`}</style>
+      `}</style>
     </div>
   );
 }

@@ -76,7 +76,7 @@ export default function Room() {
         ))}
       </div>
       <button onClick={resetGame}>Reiniciar</button>
-      <style jsx>{\`
+      <style jsx>{`
         .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
         h1 { color: #d6336c; }
         .status { margin: 10px; font-size: 1.2rem; }
@@ -88,7 +88,7 @@ export default function Room() {
         .front { background: #fff; color: #4a0a35; }
         .back { background: #d6336c; color: #fff; transform: rotateY(180deg); }
         button { margin-top: 15px; padding: 8px 18px; background: #d6336c; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
-      \`}</style>
+      `}</style>
     </div>
   ) : <p>Cargando...</p>;
 }
