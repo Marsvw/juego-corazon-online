@@ -1,4 +1,3 @@
-// TEST LINE - MARS
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import seedrandom from 'seedrandom';
@@ -29,7 +28,7 @@ export default function Room() {
     return () => clearInterval(interval);
   }, [id]);
 
-  const handleClick = (i) => {
+  const handleClick = i => {
     if (found || flipped[i]) return;
     const newFlipped = [...flipped];
     newFlipped[i] = true;
@@ -40,10 +39,10 @@ export default function Room() {
     }
   };
 
-  const formatTime = (ms) => {
+  const formatTime = ms => {
     const seconds = Math.floor((ms / 1000) % 60);
-    const minutes = Math.floor((ms / (1000*60)) % 60);
-    const pad = n => String(n).padStart(2,'0');
+    const minutes = Math.floor((ms / (1000 * 60)) % 60);
+    const pad = n => String(n).padStart(2, '0');
     return `${pad(minutes)}:${pad(seconds)}`;
   };
 
@@ -91,5 +90,7 @@ export default function Room() {
         button { margin-top: 15px; padding: 8px 18px; background: #d6336c; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
       `}</style>
     </div>
-  ) : <p>Cargando...</p>;
+  ) : (
+    <p>Cargando...</p>
+  );
 }
