@@ -1,17 +1,7 @@
-import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import seedrandom from "seedrandom";
-import { database } from "../../lib/firebase";
-import {
-  ref,
-  onValue,
-  set,
-  update,
-  off,
-  onChildAdded,
-  push,
-  remove,
-} from "firebase/database";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
+import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
 
 export default function Room() {
   const router = useRouter();
@@ -20,230 +10,143 @@ export default function Room() {
   const cols = 5;
   const totalTiles = rows * cols;
 
-  // Firebase paths
-  const roomRef = id ? ref(database, `rooms/${id}`) : null;
-  const playersRef = id ? ref(database, `rooms/${id}/players`) : null;
-
-  // State
+  const [roomData, setRoomData] = useState(null);
   const [heartIndex, setHeartIndex] = useState(null);
-  const [flipped, setFlipped] = useState(Array(totalTiles).fill(false));
   const [found, setFound] = useState(false);
-  const [startTime, setStartTime] = useState(null);
   const [elapsed, setElapsed] = useState(0);
-  const [players, setPlayers] = useState([]);
-  const [myPlayerId, setMyPlayerId] = useState(null);
+  const [startTime, setStartTime] = useState(null);
 
-  // Setup Firebase listeners
   useEffect(() => {
     if (!id || !username) return;
+    const roomRef = doc(db, "rooms", id);
 
-    // Generate heart index using seeded RNG, only if not set in DB yet
-    const rng = seedrandom(id);
-    const initialHeartIndex = Math.floor(rng() * totalTiles);
+    // Listen for live updates in room data
+    const unsubscribe = onSnapshot(roomRef, (docSnap) => {
+      if (!docSnap.exists()) {
+        alert("Room was deleted");
+        router.push('/');
+        return;
+      }
+      const data = docSnap.data();
+      setRoomData(data);
 
-    // Listen for room data
-    onValue(roomRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        setHeartIndex(data.heartIndex ?? initialHeartIndex);
-        setFlipped(data.flipped ?? Array(totalTiles).fill(false));
-        setFound(data.found ?? false);
-        setStartTime(data.startTime ?? Date.now());
-        setElapsed(data.elapsed ?? 0);
-      } else {
-        // Initialize room if none exists
-        set(roomRef, {
-          heartIndex: initialHeartIndex,
-          flipped: Array(totalTiles).fill(false),
-          found: false,
-          startTime: Date.now(),
-          elapsed: 0,
+      // Initialize gameState if not set
+      if (!data.gameState) {
+        // randomly assign heart index
+        const randomIndex = Math.floor(Math.random() * totalTiles);
+        updateDoc(roomRef, {
+          gameState: {
+            flipped: Array(totalTiles).fill(false),
+            heartIndex: randomIndex,
+            found: false,
+            startTime: Date.now(),
+          }
         });
+        setHeartIndex(randomIndex);
+        setFound(false);
+        setElapsed(0);
+        setStartTime(Date.now());
+      } else {
+        setHeartIndex(data.gameState.heartIndex);
+        setFound(data.gameState.found);
+        setElapsed(Date.now() - data.gameState.startTime);
+        setStartTime(data.gameState.startTime);
       }
     });
 
-    // Listen for players list
-    onValue(playersRef, (snapshot) => {
-      const playersData = snapshot.val() || {};
-      const playersArr = Object.entries(playersData).map(([key, val]) => ({
-        id: key,
-        username: val.username,
-      }));
-      setPlayers(playersArr);
-    });
-
-    // Add current player to players list
-    const newPlayerRef = push(playersRef);
-    set(newPlayerRef, { username });
-    setMyPlayerId(newPlayerRef.key);
-
-    // Cleanup on unmount - remove player
-    return () => {
-      if (newPlayerRef && newPlayerRef.key) {
-        remove(ref(database, `rooms/${id}/players/${newPlayerRef.key}`));
-      }
-      off(roomRef);
-      off(playersRef);
-    };
+    return () => unsubscribe();
   }, [id, username]);
 
-  // Timer update - update elapsed every 500ms if game not found yet
   useEffect(() => {
     if (!startTime || found) return;
-    const interval = setInterval(() => {
+    const timer = setInterval(() => {
       setElapsed(Date.now() - startTime);
-      update(roomRef, { elapsed: Date.now() - startTime });
     }, 500);
-    return () => clearInterval(interval);
+    return () => clearInterval(timer);
   }, [startTime, found]);
 
-  const handleClick = (i) => {
-    if (found || flipped[i]) return;
-    const newFlipped = [...flipped];
+  const handleClick = async (i) => {
+    if (found || roomData?.gameState?.flipped[i]) return;
+
+    const roomRef = doc(db, "rooms", id);
+    const newFlipped = [...roomData.gameState.flipped];
     newFlipped[i] = true;
 
-    setFlipped(newFlipped);
-    update(roomRef, { flipped: newFlipped });
+    const foundHeart = i === heartIndex;
 
-    if (i === heartIndex) {
-      setFound(true);
-      const finalTime = Date.now() - startTime;
-      setElapsed(finalTime);
-      update(roomRef, { found: true, elapsed: finalTime });
-    }
+    await updateDoc(roomRef, {
+      "gameState.flipped": newFlipped,
+      "gameState.found": foundHeart ? true : roomData.gameState.found,
+      "gameState.foundBy": foundHeart ? username : roomData.gameState.foundBy,
+      "gameState.elapsed": foundHeart ? Date.now() - startTime : roomData.gameState.elapsed,
+    });
   };
 
   const formatTime = (ms) => {
     const seconds = Math.floor((ms / 1000) % 60);
     const minutes = Math.floor((ms / (1000 * 60)) % 60);
-    const pad = (n) => String(n).padStart(2, "0");
+    const pad = n => String(n).padStart(2, '0');
     return `${pad(minutes)}:${pad(seconds)}`;
   };
 
-  const resetGame = () => {
-    setFlipped(Array(totalTiles).fill(false));
-    setFound(false);
-    const newStart = Date.now();
-    setStartTime(newStart);
-    setElapsed(0);
-    update(roomRef, {
-      flipped: Array(totalTiles).fill(false),
-      found: false,
-      startTime: newStart,
-      elapsed: 0,
+  const resetGame = async () => {
+    const roomRef = doc(db, "rooms", id);
+    const randomIndex = Math.floor(Math.random() * totalTiles);
+    await updateDoc(roomRef, {
+      gameState: {
+        flipped: Array(totalTiles).fill(false),
+        heartIndex: randomIndex,
+        found: false,
+        startTime: Date.now(),
+        foundBy: null,
+        elapsed: 0,
+      }
     });
   };
 
-  if (!id || !username)
-    return <p style={{ padding: "20px" }}>Loading... Please enter a username.</p>;
+  if (!roomData) return <p>Cargando...</p>;
 
   return (
     <div className="container">
       <h1>Sala: {id}</h1>
-      <div>
-        <b>Jugadores en la sala:</b>
-        <ul>
-          {players.map((p) => (
-            <li key={p.id}>{p.username}</li>
-          ))}
-        </ul>
-      </div>
-
+      <h2>Jugadores:</h2>
+      <ul>
+        {roomData.players?.map(p => <li key={p.id}>{p.id}</li>)}
+      </ul>
       <div className="status">
         <div>Tiempo: {formatTime(elapsed)}</div>
-        <div className="message">{found ? `¡La encontraste en ${formatTime(elapsed)}!` : ""}</div>
+        <div className="message">
+          {found ? `¡La encontró ${roomData.gameState.foundBy} en ${formatTime(elapsed)}!` : ''}
+        </div>
       </div>
-
-      <div
-        className="grid"
-        style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}
-      >
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
         {Array.from({ length: totalTiles }).map((_, i) => (
           <div
             key={i}
-            className={`tile ${flipped[i] ? "flipped" : ""}`}
+            className={`tile ${roomData.gameState.flipped[i] ? 'flipped' : ''}`}
             onClick={() => handleClick(i)}
           >
             <div className="front">❓</div>
-            <div className="back">{i === heartIndex ? "❤️" : "❌"}</div>
+            <div className="back">{i === heartIndex ? '❤️' : '❌'}</div>
           </div>
         ))}
       </div>
-
       <button onClick={resetGame}>Reiniciar</button>
 
       <style jsx>{`
-        .container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 20px;
-        }
-        h1 {
-          color: #d6336c;
-        }
-        .status {
-          margin: 10px;
-          font-size: 1.2rem;
-        }
-        .message {
-          margin-top: 5px;
-          color: #b30059;
-        }
-        .grid {
-          display: grid;
-          gap: 8px;
-          width: 100%;
-          max-width: 400px;
-        }
-        .tile {
-          position: relative;
-          width: 60px;
-          height: 60px;
-          background: #ffe6f2;
-          border-radius: 10px;
-          cursor: pointer;
-          transform-style: preserve-3d;
-          transition: transform 0.4s;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: auto;
-        }
-        .tile.flipped {
-          transform: rotateY(180deg);
-          cursor: default;
-        }
-        .front,
-        .back {
-          position: absolute;
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          backface-visibility: hidden;
-          border-radius: 10px;
-          font-size: 1.5rem;
-        }
-        .front {
-          background: #fff;
-          color: #4a0a35;
-        }
-        .back {
-          background: #d6336c;
-          color: #fff;
-          transform: rotateY(180deg);
-        }
-        button {
-          margin-top: 15px;
-          padding: 8px 18px;
-          background: #d6336c;
-          color: #fff;
-          border: none;
-          border-radius: 6px;
-          cursor: pointer;
-        }
+        .container { display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        h1 { color: #d6336c; }
+        ul { list-style: none; padding: 0; }
+        li { font-weight: bold; color: #b30059; }
+        .status { margin: 10px; font-size: 1.2rem; }
+        .message { margin-top: 5px; color: #b30059; }
+        .grid { display: grid; gap: 8px; width: 100%; max-width: 400px; }
+        .tile { position: relative; width: 60px; height: 60px; background: #ffe6f2; border-radius: 10px; cursor: pointer; transform-style: preserve-3d; transition: transform 0.4s; display: flex; align-items: center; justify-content: center; margin: auto; }
+        .tile.flipped { transform: rotateY(180deg); cursor: default; }
+        .front, .back { position: absolute; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; backface-visibility: hidden; border-radius: 10px; font-size: 1.5rem;}
+        .front { background: #fff; color: #4a0a35; }
+        .back { background: #d6336c; color: #fff; transform: rotateY(180deg); }
+        button { margin-top: 15px; padding: 8px 18px; background: #d6336c; color: #fff; border: none; border-radius: 6px; cursor: pointer; }
       `}</style>
     </div>
   );
