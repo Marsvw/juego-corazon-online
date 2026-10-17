@@ -2,7 +2,7 @@
 
 // How fast launch speed bleeds off each frame once a fighter is flying faster
 // than they could move on their own.
-export const KB_DECAY = 0.3;
+export const KB_DECAY = 0.25;
 // How far past a platform edge a fighter's centre can go and still stand on it.
 const FOOT_MARGIN = 4;
 // Ledge assist: a recovering fighter this close to a stage corner gets pulled up.

@@ -153,3 +153,84 @@ test('up special recovers a fighter who fell off the side', () => {
   assert.equal(f.grounded, true);
   assert.ok(f.y <= main.y, 'should be standing on or above the stage');
 });
+
+test('every fighter has the full move set', async () => {
+  const { FIGHTER_LIST } = await import('../game/fighters.js');
+  const required = ['jab', 'sideTilt', 'upTilt', 'downTilt', 'nair', 'fair', 'upAir', 'downAir', 'neutralSpecial', 'sideSpecial', 'upSpecial', 'downSpecial'];
+  assert.equal(FIGHTER_LIST.length, 8);
+  for (const f of FIGHTER_LIST) {
+    for (const id of required) assert.ok(f.moves[id], `${f.id} is missing ${id}`);
+    assert.ok(f.moves.upSpecial.helpless, `${f.id} up special should leave them helpless`);
+  }
+});
+
+test('a seeded CPU-vs-CPU match ends with a winner', async () => {
+  const { createAI } = await import('../game/ai.js');
+  const s = createMatch({ players: [{ charId: 'tralalero', type: 'cpu' }, { charId: 'tungtung', type: 'cpu' }], stocks: 2, seed: 3 });
+  const ais = [createAI(3, 11), createAI(3, 29)];
+  let frames = 0;
+  while (!s.over && frames < 60 * 60 * 5) {
+    step(s, s.fighters.map((_, i) => ais[i].think(s, i)));
+    frames++;
+  }
+  assert.equal(s.over, true, 'match should finish within five minutes');
+  assert.ok(s.winner === 0 || s.winner === 1);
+  const loser = s.fighters[1 - s.winner];
+  assert.equal(loser.stocks, 0);
+});
+
+test('four-fighter free-for-all runs and ends', async () => {
+  const { createAI } = await import('../game/ai.js');
+  const ids = ['bombardiro', 'ballerina', 'patapim', 'chimpanzini'];
+  const s = createMatch({ players: ids.map((charId) => ({ charId, type: 'cpu' })), stocks: 1, seed: 5 });
+  const ais = ids.map((_, i) => createAI(3, 100 + i));
+  let frames = 0;
+  while (!s.over && frames < 60 * 60 * 5) {
+    step(s, s.fighters.map((_, i) => ais[i].think(s, i)));
+    frames++;
+  }
+  assert.equal(s.over, true);
+  assert.equal(s.eliminated.length, 3);
+});
+
+test('grabs hold the target, then throw them', () => {
+  const s = match('patapim', 'tralalero');
+  const [a, t] = s.fighters;
+  a.x = 600;
+  t.x = 650;
+  a.facing = 1;
+  run(s, 1, [input({ special: true })]);
+  run(s, 16);
+  assert.equal(t.state, 'grabbed');
+  run(s, 40);
+  assert.notEqual(t.state, 'grabbed');
+  assert.ok(t.damage >= 13, `expected grab + throw damage, got ${t.damage}`);
+});
+
+test('time freeze stops the target in place', () => {
+  const s = match('lirili', 'tralalero');
+  const [a, t] = s.fighters;
+  a.x = 600;
+  t.x = 660;
+  a.facing = 1;
+  run(s, 1, [input({ down: true, special: true })]);
+  run(s, 18, [input({ down: true })]);
+  assert.ok(t.status.frozen > 0, 'target should be frozen');
+  const x = t.x;
+  run(s, 10, [EMPTY_INPUT, input({ left: true })]);
+  assert.equal(t.x, x);
+});
+
+test('counter stance hits back', () => {
+  const s = match('tralalero', 'assassino');
+  const [a, t] = s.fighters;
+  a.x = 600;
+  t.x = 660;
+  t.facing = -1;
+  run(s, 1, [EMPTY_INPUT, input({ down: true, special: true })]);
+  run(s, 6, [EMPTY_INPUT, input({ down: true })]);
+  run(s, 1, [input({ right: true, attack: true })]);
+  run(s, 20);
+  assert.equal(t.damage, 0, 'counter user should take no damage');
+  assert.ok(a.damage > 0, 'attacker should take the counter hit');
+});

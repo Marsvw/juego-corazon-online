@@ -21,7 +21,7 @@ export default function Results({ result, onRematch, onSelect, onTitle }) {
   return (
     <div className="screen results-screen">
       {winner ? (
-        <div className="winner" style={{ '--player': PLAYER_COLORS[winner.slot] }}>
+        <div className="winner" style={{ '--player': PLAYER_COLORS[winner.port] }}>
           <div className="winner-glow" />
           <Portrait fighter={FIGHTERS[winner.charId]} size={260} animate />
           <h2>
@@ -46,7 +46,7 @@ export default function Results({ result, onRematch, onSelect, onTitle }) {
         </thead>
         <tbody>
           {ordered.map((f, i) => (
-            <tr key={f.slot} style={{ '--player': PLAYER_COLORS[f.slot] }}>
+            <tr key={f.slot} style={{ '--player': PLAYER_COLORS[f.port] }}>
               <td className="place">{PLACES[i]}</td>
               <td>
                 <span className="dot" />

@@ -63,6 +63,8 @@ function createFighter(state, player, slot) {
   const under = state.platforms.find((p) => spawn.x >= p.x && spawn.x <= p.x + p.w && Math.abs(p.y - spawn.y) < 1);
   return {
     slot,
+    // Which player colour this fighter wears (their seat on the select screen).
+    port: player.port ?? slot,
     charId: char.id,
     char,
     stats: char.stats,

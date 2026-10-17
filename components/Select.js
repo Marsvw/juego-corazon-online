@@ -3,7 +3,7 @@ import { FIGHTERS, FIGHTER_LIST } from '../game/fighters.js';
 import { PLAYER_COLORS } from '../game/render.js';
 import Portrait from './Portrait.js';
 
-export const SLOT_TYPES = ['human', 'off'];
+export const SLOT_TYPES = ['human', 'cpu', 'off'];
 
 export function slotLabel(slots, i) {
   const s = slots[i];

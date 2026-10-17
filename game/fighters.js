@@ -145,6 +145,266 @@ export const FIGHTERS = {
       },
     },
   }),
+
+  bombardiro: fighter({
+    id: 'bombardiro',
+    name: 'Bombardiro Crocodilo',
+    tagline: 'A crocodile bomber plane. Heavy, but flies with three jumps.',
+    colors: { main: '#65a30d', dark: '#3f6212', light: '#d9f99d', accent: '#f97316', plane: '#6b7280' },
+    style: { reach: 1.1, power: 1.1, speed: 0.95 },
+    stats: { walk: 4.6, airSpeed: 4.9, weight: 112, jumps: 3, jumpVel: 12, airJumpVel: 10.5, gravity: 0.55, fallSpeed: 9.5, width: 62, height: 74 },
+    specials: {
+      // Drops a bomb that blows up when it lands or hits someone.
+      neutralSpecial: {
+        total: 34,
+        spawn: [bomb({ frame: 12, vx: 3, vy: -5 })],
+      },
+      neutralSpecialAir: {
+        total: 30,
+        spawn: [bomb({ frame: 8, vx: 0, vy: 2, y: -6 })],
+      },
+      // Propeller rush forward, flying level.
+      sideSpecial: {
+        total: 42,
+        airOnce: true,
+        gravity: 0,
+        motion: [{ from: 1, to: 7, vy: 0 }, { from: 8, to: 30, vx: 11, vy: 0 }],
+        hits: [{ start: 8, end: 30, box: { x: 30, y: -38, w: 64, h: 48 }, damage: 10, angle: 40, base: 6, growth: 0.11 }],
+      },
+      // Afterburners: rockets up, scorching anyone underneath.
+      upSpecial: {
+        total: 38,
+        helpless: true,
+        steer: 0.7,
+        landingLag: 12,
+        motion: [{ from: 6, to: 6, vy: -17, vx: 3 }],
+        hits: [{ start: 6, end: 14, box: { x: -10, y: 12, w: 54, h: 44 }, damage: 8, angle: 60, base: 6, growth: 0.07 }],
+      },
+      // Nose-dive that explodes on the ground. Careful near the edge.
+      downSpecial: {
+        total: 50,
+        endOnLand: true,
+        motion: [{ from: 4, to: 4, vy: -9 }, { from: 10, to: 50, vx: 7, vy: 12 }],
+        hits: [{ start: 10, end: 50, box: { x: 20, y: -30, w: 60, h: 50 }, damage: 12, angle: -45, base: 6, growth: 0.1 }],
+        onLand: {
+          landingLag: 18,
+          spawn: [{ kind: 'explosion', x: 20, y: -30, w: 130, h: 90, life: 10, pierce: true, hit: { damage: 10, angle: 65, base: 7, growth: 0.1, angleMode: 'away' } }],
+        },
+      },
+    },
+  }),
+
+  ballerina: fighter({
+    id: 'ballerina',
+    name: 'Ballerina Cappuccina',
+    tagline: 'A dancing cappuccino. Floaty, tricky, hard to pin down.',
+    colors: { main: '#f9a8d4', dark: '#db2777', light: '#fdf2f8', accent: '#c08552' },
+    style: { reach: 1.05, power: 0.95, speed: 1.2 },
+    stats: { walk: 5.4, airSpeed: 5, airAccel: 0.55, weight: 88, gravity: 0.5, fallSpeed: 9, jumpVel: 13, airJumpVel: 12.5, width: 46, height: 92 },
+    specials: {
+      // A spinning pirouette that hits many times, then flings.
+      neutralSpecial: {
+        total: 44,
+        steer: 0.6,
+        gravity: 0.5,
+        hits: [
+          { start: 6, end: 26, box: { x: 0, y: -48, w: 92, h: 72 }, damage: 2, angle: 90, base: 3, growth: 0, rehit: 5, stun: 12 },
+          { start: 30, end: 33, box: { x: 0, y: -48, w: 104, h: 82 }, damage: 6, angle: 45, base: 7, growth: 0.12, angleMode: 'away' },
+        ],
+      },
+      // Flicks a splash of hot coffee that slows whoever it hits.
+      sideSpecial: {
+        total: 36,
+        spawn: [{ frame: 14, kind: 'coffee', x: 30, y: -50, vx: 9, vy: -2, gravity: 0.25, w: 30, h: 26, life: 50, onGround: 'remove', max: 2, hit: { damage: 6, angle: 40, base: 4, growth: 0.06, slow: 150 } }],
+      },
+      // Grand leap upward.
+      upSpecial: {
+        total: 36,
+        helpless: true,
+        steer: 0.7,
+        landingLag: 10,
+        motion: [{ from: 5, to: 5, vy: -16.5, vx: 2.5 }],
+        hits: [{ start: 5, end: 15, box: { x: 0, y: -60, w: 70, h: 90 }, damage: 8, angle: 75, base: 6, growth: 0.08 }],
+      },
+      // Tiptoes out of the way, then kicks.
+      downSpecial: {
+        total: 34,
+        invuln: [2, 14],
+        motion: [{ from: 2, to: 10, vx: -7 }, { from: 14, to: 18, vx: 6 }],
+        hits: [{ start: 16, end: 19, box: { x: 40, y: -40, w: 60, h: 40 }, damage: 9, angle: 40, base: 6, growth: 0.12 }],
+      },
+    },
+  }),
+
+  patapim: fighter({
+    id: 'patapim',
+    name: 'Brr Brr Patapim',
+    tagline: 'A tree-monkey with giant feet. Grabs you and throws you away.',
+    colors: { main: '#8b5e3c', dark: '#5b3a22', light: '#86efac', accent: '#67e8f9' },
+    style: { reach: 1.1, power: 1.15, speed: 0.95 },
+    stats: { walk: 4.8, airSpeed: 4.2, weight: 116, jumpVel: 12.6, width: 56, height: 90 },
+    specials: {
+      // Roots grab whoever is in front, then fling them.
+      neutralSpecial: {
+        total: 48,
+        hits: [{ start: 10, end: 14, box: { x: 44, y: -44, w: 52, h: 64 }, damage: 3, angle: 0, base: 0, growth: 0, grab: { hold: 26, throw: { damage: 10, angle: 45, base: 8, growth: 0.14 } } }],
+      },
+      // Steps in with a giant foot.
+      sideSpecial: {
+        total: 40,
+        airOnce: true,
+        motion: [{ from: 6, to: 12, vx: 5 }],
+        hits: [{ start: 14, end: 17, box: { x: 46, y: -14, w: 72, h: 36 }, damage: 13, angle: 80, base: 8, growth: 0.11 }],
+      },
+      // Swings up on a vine.
+      upSpecial: {
+        total: 38,
+        helpless: true,
+        steer: 0.6,
+        landingLag: 12,
+        motion: [{ from: 6, to: 6, vy: -15, vx: 6 }],
+        hits: [{ start: 6, end: 18, box: { x: 20, y: -70, w: 60, h: 60 }, damage: 7, angle: 60, base: 6, growth: 0.08 }],
+      },
+      // "Brr brr": an icy breath all around that slows everyone nearby.
+      downSpecial: {
+        total: 40,
+        hits: [{ start: 12, end: 18, box: { x: 0, y: -46, w: 150, h: 100 }, damage: 5, angle: 80, base: 4, growth: 0.03, slow: 180, angleMode: 'away' }],
+      },
+    },
+  }),
+
+  chimpanzini: fighter({
+    id: 'chimpanzini',
+    name: 'Chimpanzini Bananini',
+    tagline: 'A chimp in a banana. Quick, bouncy, full of tricks.',
+    colors: { main: '#facc15', dark: '#a16207', light: '#fef9c3', accent: '#fde047', fur: '#7c4a2a' },
+    style: { reach: 0.95, power: 0.95, speed: 1.2 },
+    stats: { walk: 6, airSpeed: 5, weight: 86, jumpVel: 14, airJumpVel: 12.5, width: 46, height: 78 },
+    specials: {
+      // Lobs a banana.
+      neutralSpecial: {
+        total: 30,
+        spawn: [{ frame: 10, kind: 'banana', x: 26, y: -50, vx: 8, vy: -6, gravity: 0.4, w: 26, h: 18, life: 80, onGround: 'remove', max: 2, hit: { damage: 7, angle: 45, base: 5, growth: 0.08 } }],
+      },
+      // Rolls forward, untouchable at first, and pops out with a hit.
+      sideSpecial: {
+        total: 34,
+        airOnce: true,
+        gravity: 0.4,
+        invuln: [3, 12],
+        motion: [{ from: 3, to: 18, vx: 12 }],
+        hits: [{ start: 18, end: 21, box: { x: 34, y: -36, w: 56, h: 46 }, damage: 9, angle: 35, base: 6, growth: 0.12 }],
+      },
+      // Flips high into the air.
+      upSpecial: {
+        total: 34,
+        helpless: true,
+        steer: 0.7,
+        landingLag: 10,
+        motion: [{ from: 4, to: 4, vy: -17, vx: 2 }],
+        hits: [{ start: 4, end: 14, box: { x: 0, y: -50, w: 70, h: 80 }, damage: 7, angle: 80, base: 6, growth: 0.07 }],
+      },
+      // Drops a banana peel. Anyone else who steps on it slips.
+      downSpecial: {
+        total: 28,
+        spawn: [{ frame: 10, kind: 'peel', x: 30, y: -6, vx: 0, vy: 0, gravity: 0.5, w: 34, h: 14, life: 900, onGround: 'stay', max: 1, hit: { damage: 4, angle: 85, base: 5, growth: 0.02, stun: 45 } }],
+      },
+    },
+  }),
+
+  lirili: fighter({
+    id: 'lirili',
+    name: 'Lirilì Larilà',
+    tagline: 'A cactus elephant in sandals. Keeps you away with spikes.',
+    colors: { main: '#9ca3af', dark: '#4b5563', light: '#e5e7eb', accent: '#a3e635', cactus: '#4d9a3a' },
+    style: { reach: 1.25, power: 1.05, speed: 0.9 },
+    stats: { walk: 4.6, airSpeed: 4.2, weight: 106, width: 58, height: 88 },
+    specials: {
+      // Fires three cactus spikes in a spread.
+      neutralSpecial: {
+        total: 36,
+        spawn: [-1.5, 0, 1.5].map((vy) => ({ frame: 12, kind: 'spike', x: 30, y: -50, vx: 10, vy, gravity: 0.05, w: 18, h: 10, life: 45, onGround: 'remove', max: 6, hit: { damage: 4, angle: 30, base: 4, growth: 0.05 } })),
+      },
+      // Long trunk sweep.
+      sideSpecial: {
+        total: 38,
+        hits: [{ start: 12, end: 16, box: { x: 70, y: -40, w: 100, h: 32 }, damage: 11, angle: 30, base: 7, growth: 0.12 }],
+      },
+      // Hops up and rains spikes below.
+      upSpecial: {
+        total: 36,
+        helpless: true,
+        steer: 0.6,
+        landingLag: 12,
+        motion: [{ from: 6, to: 6, vy: -15.5, vx: 2 }],
+        hits: [{ start: 6, end: 12, box: { x: 0, y: -10, w: 60, h: 40 }, damage: 6, angle: 70, base: 6, growth: 0.06 }],
+        spawn: [-3, 3].map((vx) => ({ frame: 8, kind: 'spike', x: 0, y: 0, vx, vy: 8, gravity: 0.2, w: 10, h: 18, life: 40, onGround: 'remove', max: 6, hit: { damage: 4, angle: -60, base: 4, growth: 0.04 } })),
+      },
+      // Stops time for whoever is in front.
+      downSpecial: {
+        total: 46,
+        hits: [{ start: 14, end: 18, box: { x: 50, y: -46, w: 90, h: 84 }, damage: 4, angle: 0, base: 0, growth: 0, freeze: 55 }],
+      },
+    },
+  }),
+
+  assassino: fighter({
+    id: 'assassino',
+    name: 'Cappuccino Assassino',
+    tagline: 'A ninja coffee cup. Fast and deadly, but goes flying easily.',
+    colors: { main: '#f5f5f4', dark: '#1c1917', light: '#d6a77a', accent: '#a78bfa' },
+    style: { reach: 1.05, power: 1.15, speed: 1.25 },
+    stats: { walk: 6.4, airSpeed: 5, weight: 80, jumpVel: 13.8, width: 44, height: 84 },
+    specials: {
+      // Throwing stars.
+      neutralSpecial: {
+        total: 22,
+        spawn: [{ frame: 7, kind: 'star', x: 24, y: -50, vx: 15, vy: 0, w: 18, h: 18, life: 40, onGround: 'remove', max: 3, hit: { damage: 3, angle: 30, base: 3, growth: 0.03 } }],
+      },
+      // Vanishes and reappears further ahead, slicing everything in between.
+      sideSpecial: {
+        total: 34,
+        airOnce: true,
+        gravity: 0.2,
+        invuln: [6, 12],
+        teleport: { frame: 10, dx: 150 },
+        hits: [{ start: 10, end: 13, box: { x: -70, y: -44, w: 170, h: 50 }, damage: 11, angle: 40, base: 7, growth: 0.12 }],
+      },
+      // Puff of steam carries him upward.
+      upSpecial: {
+        total: 32,
+        helpless: true,
+        steer: 0.7,
+        landingLag: 10,
+        motion: [{ from: 4, to: 4, vy: -16.5, vx: 3 }],
+        hits: [{ start: 4, end: 12, box: { x: 10, y: -60, w: 60, h: 70 }, damage: 7, angle: 80, base: 6, growth: 0.07 }],
+      },
+      // Counter stance: if hit, strikes back harder.
+      downSpecial: {
+        total: 40,
+        counter: { from: 4, to: 24, hit: { damage: 10, angle: 38, base: 8, growth: 0.13 } },
+      },
+    },
+  }),
 };
+
+function bomb({ frame, vx, vy, y = -24 }) {
+  return {
+    frame,
+    kind: 'bomb',
+    x: 10,
+    y,
+    vx,
+    vy,
+    gravity: 0.45,
+    w: 22,
+    h: 22,
+    life: 120,
+    onGround: 'explode',
+    max: 2,
+    hit: { damage: 4, angle: 70, base: 4, growth: 0.04 },
+    explode: { size: 110, life: 10, hit: { damage: 12, angle: 70, base: 7, growth: 0.12, angleMode: 'away' } },
+  };
+}
 
 export const FIGHTER_LIST = Object.values(FIGHTERS);

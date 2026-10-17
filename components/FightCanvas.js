@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createMatch, step, placements } from '../game/engine.js';
 import { createInput } from '../game/input.js';
+import { createAI } from '../game/ai.js';
 import { createRenderer } from '../game/render.js';
 import { drawPortrait } from '../game/art.js';
 import { FIGHTER_LIST } from '../game/fighters.js';
@@ -26,6 +27,7 @@ function summarize(state, players) {
     placements: placements(state),
     fighters: state.fighters.map((f) => ({
       slot: f.slot,
+      port: f.port,
       charId: f.charId,
       label: players[f.slot].label,
       score: { ...f.score },
@@ -56,6 +58,7 @@ export default function FightCanvas({ config, onEnd, onQuit }) {
     window.__brawlState = state;
     const input = createInput(window);
     const renderer = createRenderer(canvasRef.current, { portraits: makePortraits() });
+    const cpus = config.players.map((p, i) => (p.type === 'cpu' ? createAI(p.level, (Math.random() * 1e9) | 0) : null));
 
     let raf = 0;
     let last = performance.now();
@@ -73,7 +76,7 @@ export default function FightCanvas({ config, onEnd, onQuit }) {
         acc += dt * (state.endTimer > 0 ? 0.35 : 1);
         while (acc >= STEP_MS) {
           acc -= STEP_MS;
-          const inputs = config.players.map((p) => (p.type === 'human' ? input.player(p.controller) : null));
+          const inputs = config.players.map((p, i) => (cpus[i] ? cpus[i].think(state, i) : input.player(p.controller)));
           step(state, inputs);
           input.endFrame();
           events.push(...state.events);

@@ -11,6 +11,15 @@ export const PLAYER_COLORS = ['#ef4444', '#3b82f6', '#eab308', '#22c55e'];
 const VIEW_H = 720;
 const TAU = Math.PI * 2;
 
+// Moves where the whole fighter spins: 'twirl' turns on the spot, 'flip'
+// does a somersault.
+const SPINS = {
+  tralalero: { upSpecial: 'twirl' },
+  ballerina: { neutralSpecial: 'twirl', upSpecial: 'twirl' },
+  chimpanzini: { upSpecial: 'flip', sideSpecial: 'flip' },
+  assassino: { upSpecial: 'flip' },
+};
+
 export function damageColor(d) {
   const stops = [
     [0, [255, 255, 255]],
@@ -57,14 +66,15 @@ export function createRenderer(canvas, { portraits } = {}) {
     const b = state.stage.blast;
     let minX = main.x - 60;
     let maxX = main.x + main.w + 60;
+    // Extra room at the bottom keeps the stage floor above the HUD.
     let minY = main.y - 300;
-    let maxY = main.y + 110;
+    let maxY = main.y + 170;
     for (const f of state.fighters) {
       if (f.state === 'dead' || f.state === 'out') continue;
       minX = Math.min(minX, f.x - 140);
       maxX = Math.max(maxX, f.x + 140);
       minY = Math.min(minY, f.y - f.stats.height - 130);
-      maxY = Math.max(maxY, f.y + 90);
+      maxY = Math.max(maxY, f.y + 150);
     }
     minX = Math.max(minX, b.left);
     maxX = Math.min(maxX, b.right);
@@ -100,7 +110,7 @@ export function createRenderer(canvas, { portraits } = {}) {
 
   function handleEvents(state, events) {
     for (const e of events) {
-      const pc = e.slot != null ? PLAYER_COLORS[e.slot] : '#fff';
+      const pc = e.slot != null ? PLAYER_COLORS[state.fighters[e.slot].port] : '#fff';
       switch (e.type) {
         case 'hit': {
           const strength = Math.min(1, e.kb / 28);
@@ -193,8 +203,7 @@ export function createRenderer(canvas, { portraits } = {}) {
   // World drawing
 
   function drawProjectile(p, frame) {
-    const owner = p.owner;
-    const color = PLAYER_COLORS[owner] || '#fff';
+    const color = '#fff';
     ctx.save();
     ctx.translate(p.x, p.y);
     switch (p.kind) {
@@ -256,6 +265,84 @@ export function createRenderer(canvas, { portraits } = {}) {
         ctx.fill();
         break;
       }
+      case 'coffee': {
+        ctx.rotate(Math.atan2(p.vy, p.vx));
+        ctx.fillStyle = '#7c4a2a';
+        ctx.beginPath();
+        ctx.ellipse(0, 0, p.w / 2, p.h / 3, 0, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = '#c08552';
+        for (let i = 1; i <= 3; i++) {
+          ctx.beginPath();
+          ctx.arc(-i * 9, Math.sin(frame * 0.5 + i) * 4, 5 - i, 0, TAU);
+          ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.beginPath();
+        ctx.ellipse(4, -3, 5, 2, 0, 0, TAU);
+        ctx.fill();
+        break;
+      }
+      case 'banana': {
+        ctx.rotate(p.age * 0.35 * (Math.sign(p.vx) || 1));
+        ctx.fillStyle = '#facc15';
+        ctx.strokeStyle = '#a16207';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, -8, 14, 0.3, Math.PI - 0.3);
+        ctx.arc(0, -14, 12, Math.PI - 0.5, 0.5, true);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
+      case 'peel': {
+        ctx.fillStyle = '#facc15';
+        ctx.strokeStyle = '#a16207';
+        ctx.lineWidth = 1.5;
+        for (const a of [-2.4, -1.57, -0.7]) {
+          ctx.beginPath();
+          ctx.ellipse(Math.cos(a) * 9, 4 + Math.sin(a) * 3, 11, 4, a + Math.PI / 2, 0, TAU);
+          ctx.fill();
+          ctx.stroke();
+        }
+        ctx.fillStyle = '#854d0e';
+        ctx.fillRect(-2, -2, 4, 5);
+        break;
+      }
+      case 'spike': {
+        ctx.rotate(Math.atan2(p.vy, p.vx));
+        ctx.fillStyle = '#4d7c0f';
+        ctx.beginPath();
+        ctx.moveTo(12, 0);
+        ctx.lineTo(-10, -4);
+        ctx.lineTo(-10, 4);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#f7fee7';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-8, 0);
+        ctx.lineTo(10, 0);
+        ctx.stroke();
+        break;
+      }
+      case 'star': {
+        ctx.rotate(p.age * 0.6);
+        ctx.fillStyle = '#d1d5db';
+        ctx.strokeStyle = '#4b5563';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        for (let i = 0; i < 8; i++) {
+          const a = (i * Math.PI) / 4;
+          const r = i % 2 ? 3.5 : 10;
+          ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
       default: {
         ctx.fillStyle = color;
         ctx.beginPath();
@@ -303,7 +390,7 @@ export function createRenderer(canvas, { portraits } = {}) {
     if (f.state === 'dead' || f.state === 'out') return;
     const s = f.stats;
     const frame = state.frame;
-    const pc = PLAYER_COLORS[f.slot];
+    const pc = PLAYER_COLORS[f.port];
     const pose = {
       t: frame + f.slot * 37,
       moveId: f.move ? f.move.id : null,
@@ -342,8 +429,13 @@ export function createRenderer(canvas, { portraits } = {}) {
     } else if (!f.grounded && f.vy < -6 && f.state === 'air') {
       ctx.scale(0.94, 1.06);
     }
-    if (f.move && f.move.id === 'upSpecial' && f.charId === 'tralalero') {
+    const spin = f.move && SPINS[f.charId] && SPINS[f.charId][f.move.id];
+    if (spin === 'twirl') {
       ctx.scale(Math.cos(f.move.frame * 0.7) || 0.01, 1);
+    } else if (spin === 'flip') {
+      ctx.translate(0, -s.height / 2);
+      ctx.rotate(-Math.min(1, f.move.frame / 18) * TAU);
+      ctx.translate(0, s.height / 2);
     }
     if (f.state === 'roll') {
       ctx.translate(0, -s.height / 2);
@@ -398,7 +490,7 @@ export function createRenderer(canvas, { portraits } = {}) {
     ctx.textAlign = 'center';
     ctx.lineWidth = 4;
     ctx.strokeStyle = 'rgba(0,0,0,0.6)';
-    const label = f.type === 'cpu' ? 'CPU' : `P${f.slot + 1}`;
+    const label = f.name;
     ctx.strokeText(label, f.x, ty - 4);
     ctx.fillText(label, f.x, ty - 4);
     ctx.textAlign = 'left';
@@ -508,7 +600,7 @@ export function createRenderer(canvas, { portraits } = {}) {
     ctx.save();
     ctx.scale(hs, hs);
     for (const f of state.fighters) {
-      const pc = PLAYER_COLORS[f.slot];
+      const pc = PLAYER_COLORS[f.port];
       ctx.globalAlpha = f.state === 'out' ? 0.45 : 1;
       ctx.fillStyle = 'rgba(15, 12, 30, 0.72)';
       ctx.beginPath();
@@ -573,7 +665,7 @@ export function createRenderer(canvas, { portraits } = {}) {
       const cy = Math.max(m, Math.min(H - m - 90 * hs, sy));
       ctx.save();
       ctx.translate(cx, cy);
-      ctx.fillStyle = PLAYER_COLORS[f.slot];
+      ctx.fillStyle = PLAYER_COLORS[f.port];
       ctx.beginPath();
       ctx.arc(0, 0, 26 * hs, 0, TAU);
       ctx.fill();

@@ -7,21 +7,23 @@ import Results from './Results.js';
 
 const DEFAULT_SLOTS = [
   { type: 'human', charId: 'tralalero', level: 2 },
-  { type: 'human', charId: 'tungtung', level: 2 },
-  { type: 'off', charId: 'tralalero', level: 2 },
-  { type: 'off', charId: 'tungtung', level: 2 },
+  { type: 'cpu', charId: 'tungtung', level: 2 },
+  { type: 'off', charId: 'bombardiro', level: 2 },
+  { type: 'off', charId: 'ballerina', level: 2 },
 ];
 
 function buildPlayers(slots) {
   let human = 0;
   return slots
-    .map((s, i) => ({ ...s, label: slotLabel(slots, i) }))
+    .map((s, i) => ({ ...s, port: i, label: slotLabel(slots, i) }))
     .filter((s) => s.type !== 'off')
     .map((s) => ({
+      name: s.type === 'cpu' ? 'CPU' : `P${human + 1}`,
       charId: s.charId,
       type: s.type,
       level: s.level,
       label: s.label,
+      port: s.port,
       controller: s.type === 'human' ? human++ : null,
     }));
 }
