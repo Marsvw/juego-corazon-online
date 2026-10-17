@@ -1,16 +1,17 @@
 {
-  "name": "juego-corazon-online",
-  "version": "1.0.0",
+  "name": "brainrot-brawl",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "test": "node --test"
   },
   "dependencies": {
-    "firebase": "^11.8.1",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "seedrandom": "latest"
+    "next": "16.4.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
   }
 }
