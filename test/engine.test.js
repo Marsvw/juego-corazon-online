@@ -303,3 +303,19 @@ test('a held banana peel gets thrown with attack', async () => {
   assert.equal(f.held, null);
   assert.ok(s.projectiles.some((p) => p.kind === 'peel' && p.owner === f.slot));
 });
+
+test('low gravity makes jumps go higher', () => {
+  const peak = (lowGravity) => {
+    const s = createMatch({ players: [{ charId: 'tralalero' }, { charId: 'tungtung' }], lowGravity });
+    const f = s.fighters[0];
+    // Stand where no platform is overhead.
+    f.x = 320;
+    let top = f.y;
+    for (let i = 0; i < 90; i++) {
+      step(s, [input({ jump: i < 40 })]);
+      top = Math.min(top, f.y);
+    }
+    return 500 - top;
+  };
+  assert.ok(peak(true) > peak(false) * 1.5);
+});

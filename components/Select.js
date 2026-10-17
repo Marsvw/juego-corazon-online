@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FIGHTERS, FIGHTER_LIST } from '../game/fighters.js';
 import { PLAYER_COLORS } from '../game/render.js';
 import Portrait from './Portrait.js';
+import { announce, sfx } from '../game/audio.js';
 
 export const SLOT_TYPES = ['human', 'cpu', 'off'];
 
@@ -30,6 +31,8 @@ export default function Select({ slots, setSlots, rules, setRules, onNext, onBac
   const update = (i, patch) => setSlots(slots.map((s, j) => (j === i ? { ...s, ...patch } : s)));
 
   const pick = (charId) => {
+    sfx.click();
+    announce(FIGHTERS[charId].name);
     const i = slots[active].type === 'off' ? slots.findIndex((s) => s.type === 'off') : active;
     const next = slots.map((s, j) => (j === i ? { ...s, charId, type: s.type === 'off' ? 'human' : s.type } : s));
     setSlots(next);
@@ -41,6 +44,11 @@ export default function Select({ slots, setSlots, rules, setRules, onNext, onBac
         break;
       }
     }
+  };
+
+  const toggleRule = (key) => {
+    sfx.click();
+    setRules({ ...rules, [key]: !rules[key] });
   };
 
   const cycleType = (i) => {
@@ -139,6 +147,15 @@ export default function Select({ slots, setSlots, rules, setRules, onNext, onBac
       </div>
 
       <footer className="screen-footer">
+        <div className="party-rules">
+          <span>Party rules</span>
+          <button className={`chip ${rules.bigHead ? 'on' : ''}`} onClick={() => toggleRule('bigHead')} aria-pressed={!!rules.bigHead}>
+            Big heads
+          </button>
+          <button className={`chip ${rules.lowGravity ? 'on' : ''}`} onClick={() => toggleRule('lowGravity')} aria-pressed={!!rules.lowGravity}>
+            Low gravity
+          </button>
+        </div>
         <p className="hint">{ready ? (FIGHTERS[slots[active]?.charId]?.tagline ?? '') : 'Add at least two fighters.'}</p>
         <button className="big-button" disabled={!ready} onClick={onNext}>
           Ready to fight!

@@ -1,11 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { FIGHTER_LIST } from '../game/fighters.js';
 import Portrait from './Portrait.js';
 import Controls from './Controls.js';
+import MuteButton from './MuteButton.js';
+import { sfx, unlockAudio } from '../game/audio.js';
 
-export default function Title({ onStart }) {
+export default function Title({ onStart: next }) {
   const [showControls, setShowControls] = useState(false);
   const [touchOnly, setTouchOnly] = useState(false);
+  const onStart = useCallback(() => {
+    unlockAudio();
+    sfx.click();
+    next();
+  }, [next]);
 
   useEffect(() => {
     setTouchOnly(window.matchMedia('(pointer: coarse)').matches && !window.matchMedia('(pointer: fine)').matches);
@@ -18,6 +25,7 @@ export default function Title({ onStart }) {
 
   return (
     <div className="screen title-screen">
+      <MuteButton className="corner" />
       <div className="title-cast">
         {FIGHTER_LIST.map((f, i) => (
           <div key={f.id} className="title-cast-member" style={{ animationDelay: `${i * 0.18}s` }}>

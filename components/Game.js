@@ -31,7 +31,7 @@ function buildPlayers(slots) {
 export default function Game() {
   const [screen, setScreen] = useState('title');
   const [slots, setSlots] = useState(DEFAULT_SLOTS);
-  const [rules, setRules] = useState({ stocks: 3, items: true });
+  const [rules, setRules] = useState({ stocks: 3, items: true, bigHead: false, lowGravity: false });
   const [stageId, setStageId] = useState('sahur');
   const [config, setConfig] = useState(null);
   const [result, setResult] = useState(null);
@@ -44,7 +44,7 @@ export default function Game() {
   const startFight = useCallback(
     (id) => {
       setStageId(id);
-      setConfig({ stageId: id, stocks: rules.stocks, items: rules.items, players: buildPlayers(slots) });
+      setConfig({ stageId: id, stocks: rules.stocks, items: rules.items, bigHead: rules.bigHead, lowGravity: rules.lowGravity, players: buildPlayers(slots) });
       setMatchId((n) => n + 1);
       setScreen('fight');
     },

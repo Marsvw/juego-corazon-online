@@ -126,6 +126,44 @@ button:focus-visible {
   box-shadow: 0 6px 0 #4c1d95, 0 10px 24px rgba(0, 0, 0, 0.35);
 }
 
+.mute-button {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 2px solid var(--panel-border);
+  background: var(--panel);
+  font-size: 20px;
+}
+
+.mute-button.corner {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.party-rules {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.chip {
+  border: 2px solid var(--panel-border);
+  background: var(--panel);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-weight: 700;
+}
+
+.chip.on {
+  background: var(--pink);
+  border-color: #fff;
+  color: #2a0a1a;
+}
+
 .link-button {
   background: none;
   border: none;
@@ -160,6 +198,7 @@ button:focus-visible {
 /* Title ------------------------------------------------------------------ */
 
 .title-screen {
+  position: relative;
   justify-content: center;
   text-align: center;
 }
@@ -623,6 +662,17 @@ button:focus-visible {
 
 .standings small {
   color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .screen-header {
+    grid-template-columns: auto 1fr auto;
+  }
+
+  .screen-header .rules {
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
 }
 
 @media (max-width: 600px) {

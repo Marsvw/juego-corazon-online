@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { announce } from '../game/audio.js';
 import { FIGHTERS } from '../game/fighters.js';
 import { PLAYER_COLORS } from '../game/render.js';
 import Portrait from './Portrait.js';
@@ -16,6 +17,12 @@ export default function Results({ result, onRematch, onSelect, onTitle }) {
   }, [onRematch, onSelect]);
 
   const winner = result.fighters.find((f) => f.slot === result.winner);
+
+  const winnerId = winner ? winner.charId : null;
+  useEffect(() => {
+    if (winnerId) announce(FIGHTERS[winnerId].name);
+  }, [winnerId]);
+
   const ordered = result.placements.map((slot) => result.fighters.find((f) => f.slot === slot));
 
   return (

@@ -6,6 +6,8 @@ import { createRenderer } from '../game/render.js';
 import { drawPortrait } from '../game/art.js';
 import { FIGHTER_LIST } from '../game/fighters.js';
 import Controls from './Controls.js';
+import MuteButton from './MuteButton.js';
+import { playEvents, sfx, unlockAudio } from '../game/audio.js';
 
 const STEP_MS = 1000 / 60;
 const COUNTDOWN = 150;
@@ -51,6 +53,8 @@ export default function FightCanvas({ config, onEnd, onQuit }) {
       stageId: config.stageId,
       stocks: config.stocks,
       items: config.items,
+      bigHead: config.bigHead,
+      lowGravity: config.lowGravity,
       players: config.players,
       seed: (Math.random() * 1e9) | 0,
       countdown: COUNTDOWN,
@@ -66,6 +70,8 @@ export default function FightCanvas({ config, onEnd, onQuit }) {
     let acc = 0;
     let ended = false;
     let endTimeout = 0;
+    let lastCount = null;
+    unlockAudio();
 
     const frame = (now) => {
       raf = requestAnimationFrame(frame);
@@ -88,6 +94,13 @@ export default function FightCanvas({ config, onEnd, onQuit }) {
         }
       }
       renderer.render(state, events);
+      playEvents(events);
+      const left = state.startTimer - state.frame;
+      const count = left > 0 ? Math.ceil(left / 50) : 0;
+      if (count !== lastCount && left > -5) {
+        sfx.count(count === 0);
+        lastCount = count;
+      }
     };
     raf = requestAnimationFrame(frame);
 
@@ -128,6 +141,7 @@ export default function FightCanvas({ config, onEnd, onQuit }) {
                 Quit match
               </button>
             </div>
+            <MuteButton />
             <Controls />
           </div>
         </div>

@@ -35,7 +35,7 @@ const RESPAWN_INVULN = 100;
 const KO_CREDIT_FRAMES = 600;
 const END_DELAY = 90;
 
-export function createMatch({ stageId = 'sahur', stocks = 3, players, seed = 1, countdown = 0, items = false }) {
+export function createMatch({ stageId = 'sahur', stocks = 3, players, seed = 1, countdown = 0, items = false, bigHead = false, lowGravity = false }) {
   const stage = STAGES[stageId];
   const state = {
     frame: 0,
@@ -45,6 +45,9 @@ export function createMatch({ stageId = 'sahur', stocks = 3, players, seed = 1, 
     projectiles: [],
     items: [],
     itemsOn: items,
+    // Party rules. Big heads is only drawn differently; low gravity changes physics.
+    bigHead,
+    lowGravity,
     itemTimer: 300,
     water: null,
     events: [],
@@ -66,13 +69,16 @@ function createFighter(state, player, slot) {
   const char = FIGHTERS[player.charId];
   const spawn = state.stage.spawns[slot % state.stage.spawns.length];
   const under = state.platforms.find((p) => spawn.x >= p.x && spawn.x <= p.x + p.w && Math.abs(p.y - spawn.y) < 1);
+  const stats = state.lowGravity
+    ? { ...char.stats, gravity: char.stats.gravity * 0.55, fallSpeed: char.stats.fallSpeed * 0.7, fastFall: char.stats.fastFall * 0.75 }
+    : char.stats;
   return {
     slot,
     // Which player colour this fighter wears (their seat on the select screen).
     port: player.port ?? slot,
     charId: char.id,
     char,
-    stats: char.stats,
+    stats,
     name: player.name || `P${slot + 1}`,
     type: player.type || 'human',
     x: spawn.x,
@@ -82,7 +88,7 @@ function createFighter(state, player, slot) {
     facing: spawn.x < 640 ? 1 : -1,
     grounded: !!under,
     platformId: under ? under.id : null,
-    jumpsLeft: char.stats.jumps,
+    jumpsLeft: stats.jumps,
     jumpHeld: false,
     fastFall: false,
     dropThrough: 0,

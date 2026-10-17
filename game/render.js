@@ -674,6 +674,19 @@ export function createRenderer(canvas, { portraits } = {}) {
     }
     ctx.scale(f.facing, 1);
     drawCharacter(ctx, f.charId, pose, f.char.colors);
+    if (state.bigHead) {
+      // Redraw everything above the neck, scaled up from the neck.
+      const neck = -s.height * 0.6;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(-300, neck - 400, 600, 400);
+      ctx.clip();
+      ctx.translate(0, neck);
+      ctx.scale(1.7, 1.7);
+      ctx.translate(0, -neck);
+      drawCharacter(ctx, f.charId, pose, f.char.colors);
+      ctx.restore();
+    }
     ctx.restore();
 
     if (f.finalReady) {
@@ -747,7 +760,7 @@ export function createRenderer(canvas, { portraits } = {}) {
     if (f.move) drawSwoosh(f, frame);
 
     // Player tag
-    const ty = f.y - s.height - 22;
+    const ty = f.y - s.height * (state.bigHead ? 1.3 : 1) - 22;
     ctx.fillStyle = pc;
     ctx.beginPath();
     ctx.moveTo(f.x - 7, ty);
