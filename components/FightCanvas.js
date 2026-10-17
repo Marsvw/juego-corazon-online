@@ -50,6 +50,7 @@ export default function FightCanvas({ config, onEnd, onQuit }) {
     const state = createMatch({
       stageId: config.stageId,
       stocks: config.stocks,
+      items: config.items,
       players: config.players,
       seed: (Math.random() * 1e9) | 0,
       countdown: COUNTDOWN,

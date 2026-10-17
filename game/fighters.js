@@ -65,6 +65,13 @@ export const FIGHTERS = {
     colors: { main: '#3b82f6', dark: '#1d4ed8', light: '#e0f2fe', accent: '#38bdf8' },
     style: { reach: 1, power: 0.95, speed: 1.15 },
     stats: { walk: 6.2, airSpeed: 4.8, weight: 88, jumpVel: 13.5 },
+    // Final: a tsunami sweeps the whole stage from behind.
+    final: {
+      name: 'TSUNAMI!',
+      total: 100,
+      invuln: [1, 100],
+      spawn: [{ frame: 18, anchor: 'stage', kind: 'wave', x: -700, y: -100, vx: 10, w: 180, h: 240, life: 150, pierce: true, hit: { damage: 28, angle: 40, base: 12, growth: 0.2 } }],
+    },
     specials: {
       // Chomp straight ahead. Slow to start, launches hard.
       neutralSpecial: {
@@ -112,6 +119,16 @@ export const FIGHTERS = {
     colors: { main: '#b07a45', dark: '#7a4f27', light: '#f1d3a8', accent: '#f59e0b' },
     style: { reach: 1.15, power: 1.25, speed: 0.85 },
     stats: { walk: 4.4, airSpeed: 3.8, weight: 124, jumpVel: 12.4, airJumpVel: 11.5, gravity: 0.68, fallSpeed: 12, width: 50, height: 96 },
+    // Final: three giant stomps, each sending shockwaves across the stage.
+    final: {
+      name: 'TUNG TUNG TUNG!',
+      total: 110,
+      invuln: [1, 110],
+      hits: [20, 50, 80].map((start, i) => ({ start, end: start + 3, group: i, box: { x: 0, y: -40, w: 300, h: 140 }, damage: 10, angle: 75, base: i === 2 ? 12 : 6, growth: i === 2 ? 0.2 : 0.05 })),
+      spawn: [20, 50, 80].flatMap((frame) =>
+        [1, -1].map((d) => ({ frame, kind: 'shockwave', x: 40 * d, y: -30, vx: 12 * d, w: 80, h: 60, life: 60, onGround: 'slide', pierce: true, hit: { damage: 10, angle: 72, base: 8, growth: 0.14 } })),
+      ),
+    },
     specials: {
       // The big bat swing. Long wind-up, huge launch.
       neutralSpecial: {
@@ -153,6 +170,22 @@ export const FIGHTERS = {
     colors: { main: '#65a30d', dark: '#3f6212', light: '#d9f99d', accent: '#f97316', plane: '#6b7280' },
     style: { reach: 1.1, power: 1.1, speed: 0.95 },
     stats: { walk: 4.6, airSpeed: 4.9, weight: 112, jumps: 3, jumpVel: 12, airJumpVel: 10.5, gravity: 0.55, fallSpeed: 9.5, width: 62, height: 74 },
+    // Final: flies up and carpet-bombs the stage.
+    final: {
+      name: 'CARPET BOMBING!',
+      total: 120,
+      invuln: [1, 120],
+      gravity: 0,
+      motion: [{ from: 1, to: 30, vx: 0, vy: -6 }, { from: 31, to: 120, vx: 0, vy: 0 }],
+      spawn: Array.from({ length: 11 }, (_, i) => ({
+        ...bomb({ frame: 30 + i * 6, vx: 0, vy: 3 }),
+        anchor: 'stage',
+        x: -400 + i * 80,
+        y: -520,
+        max: 0,
+        explode: { size: 150, life: 12, hit: { damage: 14, angle: 70, base: 9, growth: 0.15, angleMode: 'away' } },
+      })),
+    },
     specials: {
       // Drops a bomb that blows up when it lands or hits someone.
       neutralSpecial: {
@@ -201,6 +234,18 @@ export const FIGHTERS = {
     colors: { main: '#f9a8d4', dark: '#db2777', light: '#fdf2f8', accent: '#c08552' },
     style: { reach: 1.05, power: 0.95, speed: 1.2 },
     stats: { walk: 5.4, airSpeed: 5, airAccel: 0.55, weight: 88, gravity: 0.5, fallSpeed: 9, jumpVel: 13, airJumpVel: 12.5, width: 46, height: 92 },
+    // Final: a spinning tornado that carries everyone up and flings them.
+    final: {
+      name: 'GRAND JETÉ TORNADO!',
+      total: 120,
+      invuln: [1, 120],
+      gravity: 0,
+      motion: [{ from: 1, to: 110, vx: 4, vy: 0 }],
+      hits: [
+        { start: 10, end: 108, box: { x: 0, y: -70, w: 150, h: 170 }, damage: 3, angle: 90, base: 4, growth: 0, rehit: 7, stun: 14 },
+        { start: 110, end: 114, group: 'end', box: { x: 0, y: -70, w: 190, h: 200 }, damage: 12, angle: 55, base: 12, growth: 0.18, angleMode: 'away' },
+      ],
+    },
     specials: {
       // A spinning pirouette that hits many times, then flings.
       neutralSpecial: {
@@ -243,6 +288,13 @@ export const FIGHTERS = {
     colors: { main: '#8b5e3c', dark: '#5b3a22', light: '#86efac', accent: '#67e8f9' },
     style: { reach: 1.1, power: 1.15, speed: 0.95 },
     stats: { walk: 4.8, airSpeed: 4.2, weight: 116, jumpVel: 12.6, width: 56, height: 90 },
+    // Final: trees burst out of the ground across the stage.
+    final: {
+      name: 'FOREST STOMP!',
+      total: 110,
+      invuln: [1, 110],
+      spawn: [-300, -150, 0, 150, 300].map((x, i) => ({ frame: 20 + i * 10, anchor: 'stage', kind: 'tree', x, y: -80, w: 80, h: 170, life: 40, pierce: true, hit: { damage: 16, angle: 85, base: 10, growth: 0.17 } })),
+    },
     specials: {
       // Roots grab whoever is in front, then fling them.
       neutralSpecial: {
@@ -280,6 +332,13 @@ export const FIGHTERS = {
     colors: { main: '#facc15', dark: '#a16207', light: '#fef9c3', accent: '#fde047', fur: '#7c4a2a' },
     style: { reach: 0.95, power: 0.95, speed: 1.2 },
     stats: { walk: 6, airSpeed: 5, weight: 86, jumpVel: 14, airJumpVel: 12.5, width: 46, height: 78 },
+    // Final: bananas rain down from the sky.
+    final: {
+      name: 'BANANA RAIN!',
+      total: 100,
+      invuln: [1, 100],
+      spawn: Array.from({ length: 12 }, (_, i) => ({ frame: 15 + i * 5, anchor: 'stage', kind: 'banana', x: -330 + ((i * 7) % 12) * 60, y: -520, vx: 0, vy: 6, gravity: 0.3, w: 34, h: 24, life: 160, onGround: 'remove', pierce: true, hit: { damage: 10, angle: 70, base: 8, growth: 0.13 } })),
+    },
     specials: {
       // Lobs a banana.
       neutralSpecial: {
@@ -319,6 +378,15 @@ export const FIGHTERS = {
     colors: { main: '#9ca3af', dark: '#4b5563', light: '#e5e7eb', accent: '#a3e635', cactus: '#4d9a3a' },
     style: { reach: 1.25, power: 1.05, speed: 0.9 },
     stats: { walk: 4.6, airSpeed: 4.2, weight: 106, width: 58, height: 88 },
+    // Final: freezes everyone, then drops a rain of spikes on them.
+    final: {
+      name: 'TIME STOP!',
+      total: 100,
+      invuln: [1, 100],
+      noSwoosh: true,
+      hits: [{ start: 15, end: 16, box: { x: 0, y: -200, w: 2400, h: 1400 }, damage: 6, angle: 0, base: 0, growth: 0, freeze: 150 }],
+      spawn: Array.from({ length: 9 }, (_, i) => ({ frame: 30 + i * 6, anchor: 'stage', kind: 'spike', x: -320 + i * 80, y: -500, vx: 0, vy: 9, gravity: 0.25, w: 14, h: 26, life: 120, onGround: 'remove', pierce: true, hit: { damage: 9, angle: 60, base: 9, growth: 0.15 } })),
+    },
     specials: {
       // Fires three cactus spikes in a spread.
       neutralSpecial: {
@@ -355,6 +423,17 @@ export const FIGHTERS = {
     colors: { main: '#f5f5f4', dark: '#1c1917', light: '#d6a77a', accent: '#a78bfa' },
     style: { reach: 1.05, power: 1.15, speed: 1.25 },
     stats: { walk: 6.4, airSpeed: 5, weight: 80, jumpVel: 13.8, width: 44, height: 84 },
+    // Final: slices across the whole screen five times, then a finishing cut.
+    final: {
+      name: 'ESPRESSO SLASH!',
+      total: 100,
+      invuln: [1, 100],
+      noSwoosh: true,
+      hits: [
+        ...[20, 30, 40, 50, 60].map((start, i) => ({ start, end: start + 1, group: i, box: { x: 0, y: -150, w: 1500, h: 500 }, damage: 5, angle: 80, base: 3, growth: 0, stun: 20 })),
+        { start: 75, end: 76, group: 'end', box: { x: 0, y: -150, w: 1500, h: 500 }, damage: 14, angle: 45, base: 12, growth: 0.18, angleMode: 'away' },
+      ],
+    },
     specials: {
       // Throwing stars.
       neutralSpecial: {

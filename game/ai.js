@@ -98,6 +98,40 @@ export function createAI(level = 2, seed = 1) {
 
     if (me.state === 'move') return finish();
 
+    // Unleash a Final as soon as someone is close enough to get caught by it.
+    if (me.finalReady && (me.grounded || rand() < 0.2) && adx < 520 && rand() < 0.1 + cfg.attack) {
+      tap(out, 'special');
+      return finish();
+    }
+
+    // Throw a held banana peel at whoever is in front.
+    if (me.held && adx < 320 && Math.abs(dy) < 60 && rand() < cfg.attack) {
+      out[toward > 0 ? 'right' : 'left'] = true;
+      tap(out, 'attack');
+      return finish();
+    }
+
+    // Go after the Skibidi Orb.
+    const orb = state.items.find((it) => it.kind === 'orb');
+    if (orb && !me.finalReady && (adx > reach * 2 || rand() < cfg.attack * 0.5)) {
+      const ox = orb.x - me.x;
+      const oy = orb.y - (me.y - me.stats.height / 2);
+      const orbOverStage = orb.x > left + 20 && orb.x < right - 20;
+      if (orbOverStage) {
+        if (Math.abs(ox) > 40) out[ox > 0 ? 'right' : 'left'] = true;
+        if (Math.abs(ox) < 90 && oy < -40 && me.grounded && !mem.jumpHold) {
+          tap(out, 'jump');
+          mem.jumpHold = 12;
+        } else if (Math.abs(ox) < 80 && Math.abs(oy) < 90 && mem.cooldown === 0) {
+          if (oy < -30) out.up = true;
+          else out[ox > 0 ? 'right' : 'left'] = true;
+          tap(out, 'attack');
+          mem.cooldown = cfg.reaction;
+        }
+        return finish();
+      }
+    }
+
     // In range: attack.
     if (mem.cooldown === 0 && adx < reach + 10 && Math.abs(dy) < 70 && rand() < cfg.attack) {
       attack(me, target, dx, dy, toward, out, nearEdge, center, main);

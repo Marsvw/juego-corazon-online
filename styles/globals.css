@@ -282,6 +282,25 @@ button:focus-visible {
   background: rgba(255, 255, 255, 0.15);
 }
 
+.rules button.toggle {
+  width: auto;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.rules button.toggle.on {
+  background: var(--yellow);
+  color: #2a0a00;
+}
+
+.rules-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--panel-border);
+  margin: 0 4px;
+}
+
 .rules strong {
   min-width: 14px;
   text-align: center;

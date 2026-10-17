@@ -1,7 +1,8 @@
 // Match simulation. createMatch builds the state and step advances it by one
 // 60 fps frame. Nothing here touches the DOM, so matches run headless in tests.
 import { FIGHTERS } from './fighters.js';
-import { STAGES, buildPlatforms, updateStage } from './stages.js';
+import { STAGES, buildPlatforms, mainPlatform, stageAffect, updateStage } from './stages.js';
+import { ITEM_THROW, hitOrbs, updateItems } from './items.js';
 import {
   airControl,
   applyGravity,
@@ -34,7 +35,7 @@ const RESPAWN_INVULN = 100;
 const KO_CREDIT_FRAMES = 600;
 const END_DELAY = 90;
 
-export function createMatch({ stageId = 'sahur', stocks = 3, players, seed = 1, countdown = 0 }) {
+export function createMatch({ stageId = 'sahur', stocks = 3, players, seed = 1, countdown = 0, items = false }) {
   const stage = STAGES[stageId];
   const state = {
     frame: 0,
@@ -42,6 +43,10 @@ export function createMatch({ stageId = 'sahur', stocks = 3, players, seed = 1, 
     platforms: buildPlatforms(stage),
     fighters: [],
     projectiles: [],
+    items: [],
+    itemsOn: items,
+    itemTimer: 300,
+    water: null,
     events: [],
     rngState: seed | 0,
     nextId: 1,
@@ -98,6 +103,10 @@ function createFighter(state, player, slot) {
     grabTimer: 0,
     grabThrow: null,
     status: { slow: 0, frozen: 0, boost: 0 },
+    held: null,
+    finalReady: false,
+    cooldowns: {},
+    inWater: false,
     prevInput: EMPTY_INPUT,
     buffer: { attack: -99, special: -99, jump: -99, shield: -99 },
     lastHitBy: null,
@@ -116,6 +125,7 @@ export function step(state, inputs = []) {
   updateStage(state);
   for (const f of state.fighters) updateFighter(state, f, (live && inputs[f.slot]) || EMPTY_INPUT);
   updateProjectiles(state);
+  updateItems(state);
   resolveMoveHits(state);
   for (const f of state.fighters) checkKO(state, f);
   checkMatchEnd(state);
@@ -317,11 +327,26 @@ function updateFighter(state, f, input) {
       state.events.push({ type: 'ledge', x: f.x, y: f.y, slot: f.slot });
     }
   }
+
+  stageAffect(state, f, res);
 }
 
 function updateNeutral(state, f, input, dir, mult, pressedDown) {
+  if (f.held && buffered(state, f, 'attack')) {
+    if (dir) f.facing = dir;
+    f.held = null;
+    startMove(f, 'itemThrow', ITEM_THROW);
+    return;
+  }
   if (buffered(state, f, 'attack')) {
     startMove(f, chooseNormal(f, input, dir));
+    return;
+  }
+  if (f.finalReady && f.char.final && buffered(state, f, 'special')) {
+    if (dir) f.facing = dir;
+    f.finalReady = false;
+    startMove(f, 'final', f.char.final);
+    state.events.push({ type: 'final', slot: f.slot, name: f.char.final.name, x: f.x, y: f.y - f.stats.height / 2 });
     return;
   }
   if (state.frame - f.buffer.special <= BUFFER_FRAMES) {
@@ -421,8 +446,7 @@ function canStartSpecial(f, id) {
   return f.grounded || !def.airOnce || !f.airSpecials[id];
 }
 
-function startMove(f, id) {
-  const def = f.char.moves[id];
+function startMove(f, id, def = f.char.moves[id]) {
   if (!def) return;
   if (def.airOnce && !f.grounded) f.airSpecials[id] = true;
   f.move = { id, def, frame: 0, hitIds: {}, airborne: !f.grounded, overrideVy: false };
@@ -584,6 +608,8 @@ function checkKO(state, f) {
   f.move = null;
   f.vx = f.vy = 0;
   f.hitlag = 0;
+  f.held = null;
+  f.finalReady = false;
   if (f.stocks > 0) {
     setState(f, 'dead');
     f.respawnTimer = RESPAWN_DELAY;
@@ -626,6 +652,7 @@ function resolveMoveHits(state) {
       const h = hits[i];
       if (m.frame < h.start || m.frame > h.end) continue;
       const box = hitboxWorld(a, h.box);
+      if (state.items.length) hitOrbs(state, box, a);
       for (const t of state.fighters) {
         if (t === a || !canBeHit(t) || t.state === 'grabbed') continue;
         const key = `${h.group ?? i}:${t.slot}`;
@@ -650,12 +677,15 @@ export function spawnProjectile(state, f, sp) {
       state.projectiles.splice(state.projectiles.indexOf(old), 1);
     }
   }
+  // Projectiles anchored to the stage (used by Finals) are placed relative to
+  // the middle of the main platform instead of the fighter.
+  const main = sp.anchor === 'stage' ? mainPlatform(state) : null;
   const p = {
     id: state.nextId++,
     owner: f.slot,
     kind: sp.kind,
-    x: f.x + f.facing * (sp.x || 0),
-    y: f.y + (sp.y || 0),
+    x: main ? main.x + main.w / 2 + f.facing * (sp.x || 0) : f.x + f.facing * (sp.x || 0),
+    y: main ? main.y + (sp.y || 0) : f.y + (sp.y || 0),
     vx: (sp.vx || 0) * f.facing,
     vy: sp.vy || 0,
     gravity: sp.gravity || 0,
@@ -751,6 +781,11 @@ function updateProjectiles(state) {
 
     const box = { x: p.x - p.w / 2, y: p.y - p.h / 2, w: p.w, h: p.h };
     const owner = state.fighters[p.owner];
+    if (state.items.length && hitOrbs(state, box, owner) && !p.pierce) {
+      explode(state, p);
+      p.life = 0;
+      continue;
+    }
     for (const t of state.fighters) {
       if (t.slot === p.owner || !canBeHit(t) || t.state === 'grabbed') continue;
       const last = p.hitIds[t.slot];

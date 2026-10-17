@@ -65,6 +65,11 @@ export default function Select({ slots, setSlots, rules, setRules, onNext, onBac
           <button onClick={() => setRules({ ...rules, stocks: Math.min(5, rules.stocks + 1) })} aria-label="More stocks">
             +
           </button>
+          <span className="rules-sep" />
+          <span>Items</span>
+          <button className={`toggle ${rules.items ? 'on' : ''}`} onClick={() => setRules({ ...rules, items: !rules.items })} aria-pressed={rules.items}>
+            {rules.items ? 'On' : 'Off'}
+          </button>
         </div>
       </header>
 

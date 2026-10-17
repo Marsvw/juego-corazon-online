@@ -234,3 +234,72 @@ test('counter stance hits back', () => {
   assert.equal(t.damage, 0, 'counter user should take no damage');
   assert.ok(a.damage > 0, 'attacker should take the counter hit');
 });
+
+test('every stage loads and its gimmicks run without crashing', async () => {
+  const { STAGE_LIST } = await import('../game/stages.js');
+  const { createAI } = await import('../game/ai.js');
+  assert.equal(STAGE_LIST.length, 5);
+  for (const stage of STAGE_LIST) {
+    const s = createMatch({ stageId: stage.id, players: [{ charId: 'chimpanzini' }, { charId: 'bombardiro' }], stocks: 2, seed: 9, items: true });
+    const ais = [createAI(3, 1), createAI(3, 2)];
+    let frames = 0;
+    while (!s.over && frames < 60 * 60 * 5) {
+      step(s, s.fighters.map((_, i) => ais[i].think(s, i)));
+      frames++;
+    }
+    assert.equal(s.over, true, `${stage.id} match should finish`);
+  }
+});
+
+test('pizza heals and espresso speeds you up', async () => {
+  const { spawnItem } = await import('../game/items.js');
+  const s = match();
+  const f = s.fighters[0];
+  f.damage = 60;
+  for (const kind of ['pizza', 'espresso']) {
+    const it = spawnItem(s, kind);
+    it.x = f.x;
+    it.y = f.y - 20;
+    it.vy = 0;
+  }
+  run(s, 2);
+  assert.equal(f.damage, 35);
+  assert.ok(f.status.boost > 0);
+  assert.equal(s.items.length, 0);
+});
+
+test('breaking the Skibidi Orb unlocks a Final that hits hard', async () => {
+  const { spawnItem } = await import('../game/items.js');
+  const s = match('tralalero', 'tungtung');
+  const [a, t] = s.fighters;
+  const orb = spawnItem(s, 'orb');
+  // Hit the orb three times by parking it on the attacker's jab.
+  for (let i = 0; i < 3; i++) {
+    orb.baseX = a.x + 34 * a.facing;
+    orb.baseY = a.y - 46;
+    orb.age = 0;
+    run(s, 1, [input({ attack: true })]);
+    run(s, 20);
+  }
+  assert.equal(a.finalReady, true);
+  t.damage = 50;
+  run(s, 1, [input({ special: true })]);
+  assert.equal(a.move.id, 'final');
+  run(s, 160);
+  assert.ok(t.damage >= 70 || t.stocks < 3, `Final should hurt: damage ${t.damage}, stocks ${t.stocks}`);
+});
+
+test('a held banana peel gets thrown with attack', async () => {
+  const { spawnItem } = await import('../game/items.js');
+  const s = match();
+  const f = s.fighters[0];
+  const it = spawnItem(s, 'peel');
+  it.x = f.x;
+  it.y = f.y - 20;
+  run(s, 2);
+  assert.equal(f.held, 'peel');
+  run(s, 1, [input({ attack: true })]);
+  run(s, 10);
+  assert.equal(f.held, null);
+  assert.ok(s.projectiles.some((p) => p.kind === 'peel' && p.owner === f.slot));
+});
